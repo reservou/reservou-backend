@@ -14,7 +14,14 @@ export type MagicLinkOutput = {
 };
 
 export type AccessTokenPayload = {
+	/**
+	 * User ID
+	 */
 	uid: string;
+	/**
+	 * User's hotel ID, null if user is not a hotel owner
+	 */
+	hid: string | null;
 };
 
 /**
@@ -47,7 +54,8 @@ export class ConsumeMagicLink {
 		if (userFound) {
 			const authorizationToken = this.jwtService.sign({
 				uid: userFound.id,
-			});
+				hid: userFound.hotel,
+			} satisfies AccessTokenPayload);
 
 			this.authRepo.cleanupIntent(token, email);
 
@@ -78,11 +86,14 @@ export class ConsumeMagicLink {
 			email,
 			name,
 			plan: "BASIC",
+			hotel: null,
+			email_verified: new Date(),
 		});
 
 		const authorizationToken = this.jwtService.sign({
 			uid: user.id,
-		});
+			hid: null,
+		} satisfies AccessTokenPayload);
 
 		this.authRepo.cleanupIntent(token, email);
 

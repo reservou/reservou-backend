@@ -37,6 +37,7 @@ export class GetSelfController {
 				email: userFromDb.email,
 				id: userFromDb.id,
 				name: userFromDb.name,
+				hotel: userFromDb.hotel,
 			},
 			"success",
 		);

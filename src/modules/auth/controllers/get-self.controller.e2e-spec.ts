@@ -63,6 +63,7 @@ describe(`${GetSelfController.name} (E2E)`, () => {
 				id: user.id,
 				email: user.email,
 				name: user.name,
+				hotel: null,
 			},
 			error: null,
 			message: "success",

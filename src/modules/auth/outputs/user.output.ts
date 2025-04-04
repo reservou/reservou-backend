@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 
-export class UserData {
+export class UserInfo {
 	@ApiProperty({ type: String, description: "User ID" })
 	id!: string;
 
@@ -9,4 +9,10 @@ export class UserData {
 
 	@ApiProperty({ type: String, description: "User email" })
 	email!: string;
+
+	@ApiProperty({
+		type: String,
+		nullable: true,
+	})
+	hotel!: string | null;
 }
