@@ -6,7 +6,13 @@ import {
 	OnModuleDestroy,
 	OnModuleInit,
 } from "@nestjs/common";
-import { Collection, Db, Document, MongoClient } from "mongodb";
+import {
+	ClientSessionOptions,
+	Collection,
+	Db,
+	Document,
+	MongoClient,
+} from "mongodb";
 import { CollectionKey } from "./constants";
 
 interface MongoCache {
@@ -93,6 +99,12 @@ export class MongoDB implements OnModuleInit, OnModuleDestroy {
 			const { db } = await this.connect();
 			return db.collection<T>(collectionName);
 		};
+	}
+
+	async startTransaction(options?: ClientSessionOptions) {
+		const { client } = await this.connect();
+
+		return client.startSession(options);
 	}
 
 	get cache(): MongoCache {
