@@ -4,4 +4,5 @@ export class User {
 	email!: string;
 	plan!: "BASIC" | "PRO";
 	email_verified?: Date;
+	hotel!: string | null;
 }

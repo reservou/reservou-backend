@@ -1,18 +1,17 @@
 import { MongoDB } from "@/lib/db";
 import { Injectable } from "@nestjs/common";
 import { Collection, Document, ObjectId } from "mongodb";
+import { User } from "./types";
 
-export class User {
-	id!: string;
-	name!: string;
-	email!: string;
-	plan!: "BASIC" | "PRO";
-	email_verified?: Date;
-}
+export type UsersRepositoryInsert = Omit<User, "id">;
 
-export type UserInsert = Omit<User, "id">;
+export type UsersRepositoryUpdate = Partial<Omit<User, "id">>;
 
-type UserDocument = Document & Omit<User, "id">;
+type UserDocument = Document &
+	Omit<User, "id" | "hotel"> & {
+		hotel: ObjectId | null;
+	};
+
 type UserCollection = Collection<UserDocument>;
 
 @Injectable()
@@ -23,31 +22,61 @@ export class UsersRepository {
 		this.collection = this.mongoDB.getCollectionBuilder<UserDocument>("users");
 	}
 
-	async insert(data: UserInsert): Promise<User> {
+	async insert(data: UsersRepositoryInsert): Promise<User> {
+		const { email, name, plan, email_verified } = data;
+
 		const coll = await this.collection();
-		const result = await coll.insertOne(data);
-		return { ...data, id: result.insertedId.toHexString() };
+		const result = await coll.insertOne({
+			email,
+			name,
+			plan,
+			email_verified,
+			hotel: null,
+		});
+		return {
+			id: result.insertedId.toHexString(),
+			email,
+			name,
+			plan,
+			email_verified,
+			hotel: null,
+		};
 	}
 
 	async findByEmail(email: string): Promise<User | null> {
 		const coll = await this.collection();
 		const user = await coll.findOne({ email });
 		if (!user) return null;
-		return { ...user, id: user._id.toHexString() };
+		return {
+			...user,
+			id: user._id.toHexString(),
+			hotel: user.hotel?.toHexString() ?? null,
+		};
 	}
 
 	async findById(id: string): Promise<User | null> {
 		const coll = await this.collection();
 		const user = await coll.findOne({ _id: new ObjectId(id) });
 		if (!user) return null;
-		return { ...user, id: user._id.toHexString() };
+		return {
+			...user,
+			id: user._id.toHexString(),
+			hotel: user.hotel?.toHexString() ?? null,
+		};
 	}
 
-	async update(id: string, data: Partial<UserInsert>): Promise<User | null> {
+	async update(id: string, data: UsersRepositoryUpdate): Promise<User | null> {
 		const coll = await this.collection();
 		const result = await coll.findOneAndUpdate(
 			{ _id: new ObjectId(id) },
-			{ $set: data },
+			{
+				$set: {
+					...data,
+					hotel: data.hotel
+						? new ObjectId(data.hotel)
+						: (data.hotel as null | undefined),
+				},
+			},
 			{ returnDocument: "after", ignoreUndefined: true },
 		);
 		if (!result?.value) return null;

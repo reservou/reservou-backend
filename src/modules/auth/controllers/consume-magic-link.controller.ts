@@ -6,11 +6,11 @@ import {
 	ApiTags,
 } from "@nestjs/swagger";
 import { FastifyReply } from "fastify";
-import { AUTHORIZATION_COOKIE_NAME } from "../auth.constants";
 import { Public } from "../decorators/public.decorator";
 import { ConsumeMagicLink } from "../fn/consume-magic-link";
 import { ConsumeMagicLinkRequestDto } from "../inputs/consume-magic-link.input";
 import { ConsumeMagicLinkResponseDto } from "../outputs/consume-magic-link.output";
+import { setAuthorizationCookie } from "../utils/set-authorization-cookie";
 
 @Public()
 @ApiTags("Auth")
@@ -27,20 +27,11 @@ export class ConsumeMagicLinkController {
 	@ApiBadRequestResponse({ description: "Invalid or expired token" })
 	async consume(
 		@Param() { token }: ConsumeMagicLinkRequestDto,
-		@Res({ passthrough: true }) res: FastifyReply,
+		@Res({ passthrough: true }) reply: FastifyReply,
 	): Promise<ConsumeMagicLinkResponseDto> {
 		const result = await this.consumeMagicLink.execute(token);
 
-		res.setCookie(
-			AUTHORIZATION_COOKIE_NAME,
-			`Bearer ${result.authorizationToken}`,
-			{
-				httpOnly: true,
-				path: "/",
-				secure: process.env.NODE_ENV === "production",
-				sameSite: "strict",
-			},
-		);
+		setAuthorizationCookie(reply, result.authorizationToken);
 
 		const { authorizationToken, ...userInfo } = result;
 		return new ConsumeMagicLinkResponseDto(
